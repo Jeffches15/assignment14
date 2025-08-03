@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 import pytest
 import requests
+from playwright.sync_api import Page
 
 # Import the Calculation model for direct model tests.
 from app.models.calculation import Calculation
@@ -318,3 +319,96 @@ def test_model_division():
     with pytest.raises(ValueError):
         calc_zero = Calculation.create("division", dummy_user_id, [100, 0])
         calc_zero.get_result()
+
+# ---------------------------------------------------------------------------
+# Positive Playwright tests
+# ---------------------------------------------------------------------------
+def test_register_with_valid_data_shows_success(page: Page):
+    page.goto("http://localhost:8000/register")
+
+    page.fill("#username", "validuser123")
+    page.fill("#email", "validuser123@example.com")
+    page.fill("#first_name", "Valid")
+    page.fill("#last_name", "User")
+    page.fill("#password", "ValidPass1!")
+    page.fill("#confirm_password", "ValidPass1!")
+
+    page.click("button[type='submit']")
+
+    # Wait for the success message text inside the alert (timeout 10s)
+    page.wait_for_selector("#successMessage:has-text('Registration successful')", timeout=10000)
+
+    # Optionally assert the container is visible too
+    success_alert = page.locator("#successAlert")
+    assert success_alert.is_visible()
+
+    # Wait for redirect to /login page
+    page.wait_for_url("**/login", timeout=10000)
+    assert "/login" in page.url
+
+
+def test_login_with_correct_credentials_stores_token(page: Page):
+    page.goto("http://localhost:8000/login")
+
+    # Fill login form with valid credentials
+    page.fill("#username", "validuser123")
+    page.fill("#password", "ValidPass1!")  # Use your valid password with special char if required
+
+    page.click("button[type='submit']")
+
+    # Wait for a success indication on the page, e.g. success alert or redirect
+    # Adjust selector based on your actual UI implementation
+    page.wait_for_selector("#successMessage:has-text('Login successful')", timeout=10000)
+
+    # Alternatively, check if tokens stored in localStorage (example keys)
+    token = page.evaluate("() => localStorage.getItem('access_token')")
+    refresh_token = page.evaluate("() => localStorage.getItem('refresh_token')")
+
+    assert token is not None and token != ""
+    assert refresh_token is not None and refresh_token != ""
+
+
+# ---------------------------------------------------------------------------
+# Negative Playwright tests
+# ---------------------------------------------------------------------------
+def test_login_wrong_password_returns_401(page):
+    page.goto("http://localhost:8000/login")
+
+    page.fill("#username", "existinguser")
+    page.fill("#password", "WrongPass123!")
+
+    with page.expect_response("**/auth/login") as response_info:
+        page.click("button[type='submit']")
+
+    response = response_info.value
+    assert response.status == 401
+
+    # Wait for error alert to appear
+    page.locator("#errorAlert").wait_for(state="visible", timeout=5000)
+
+    # Check error message text
+    error_text = page.locator("#errorMessage").inner_text()
+    assert "invalid" in error_text.lower()
+
+def test_register_short_password_shows_error(page):
+    page.goto("http://localhost:8000/register")
+    page.wait_for_selector("#username")
+
+    # Fill form with invalid password
+    page.fill("#username", "newuser")
+    page.fill("#email", "newuser@example.com")
+    page.fill("#first_name", "John")
+    page.fill("#last_name", "Doe")
+    page.fill("#password", "123")  # too short, no uppercase, no lowercase
+    page.fill("#confirm_password", "123")
+
+    # Click submit button (client validation will prevent submission)
+    page.click("button[type='submit']")
+
+    # Wait for error alert to become visible
+    error_alert = page.locator("#errorAlert")
+    error_alert.wait_for(state="visible", timeout=5000)
+
+    error_text = error_alert.inner_text().lower()
+    assert "password" in error_text or "invalid" in error_text or "error" in error_text
+
