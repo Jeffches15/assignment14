@@ -1,6 +1,9 @@
 services:
   web:
     build: .
+    container_name: assignment14_calculator
+
+    image: jeffches15/assignment14:latest
     ports:
       - "8000:8000"
     volumes:
