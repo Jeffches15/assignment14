@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create calculation');
+        throw new Error(errorData.detail[0].msg || 'Failed to create calculation');
       }
       
       // Get the created calculation data
@@ -478,6 +478,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 500);
       
     } catch (error) {
+      console.log(error);
       showError(error.message || 'Error creating calculation');
     } finally {
       // Restore button state
