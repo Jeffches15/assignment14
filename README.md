@@ -1,6 +1,76 @@
 # 📦 Project Setup
 
----
+## GitHub Actions successful run screenshot:
+![GitHub Actions](./screenshots/github%20actions%20screenshot.png)
+
+## Screenshots of BREAD operations:
+   ### Browse: 
+   ![Browse](./screenshots/bread_pics/browse%20screenshot.png)
+
+   ### Read: 
+   ![Create](./screenshots/bread_pics/read%20screenshot.png)
+
+   ### Edit:
+   ![Edit](./screenshots/bread_pics/edit%20screenshot.png)
+
+   ### Add:
+   ![Add](./screenshots/bread_pics/add%20screenshot.png)
+
+   ### Delete:
+   ![Delete](./screenshots/bread_pics/delete%20screenshot.png)
+
+## Screenshots of successful Docker image deployment:
+![docker image success](./screenshots/docker%20image%20success1.png)
+
+![docker image success](./screenshots/docker%20image%20success2.png)
+
+
+## Docker Hub repository link:
+https://hub.docker.com/r/jeffches15/assignment14
+
+## How to run the application:
+- After setting up the project and getting all the files situated, do these steps:
+   1. docker compose up --build
+   2. open a browser tab and go to http://localhost:8000/
+   3. open a different tab and go to http://localhost:5050/ (pgAdmin)
+      - sign in using account details in docker-compose.yml file
+      - create a new server using information in docker-compose.yml file
+      - make sure users and calculations tables are in the schema
+   4. click register and create an account
+   5. log into new account
+   6. begin creating new calculations and seeing them display in the calculation history
+   7. experiment with "view", "edit", and "delete" features
+
+- When done using the app:
+   1. run docker compose down -v
+      -  this removes the pgAdmin server and all data created (start again with fresh slate)
+
+## How to run tests locally
+In order to run these pytests, the first command to run is: docker compose up -d --build. This command builds the image if its not already there, and starts the containers and it in the background. This "unlocks" the terminal, allowing pytest commands to be entered. We need to run this docker command because we are interacting with a PostgreSQL database and a server to connect to.
+
+Running 'pytest' runs every test function in every test file, but I split this up into several commands. I ran pytest file by file in this order:
+
+- pytest -v -s tests/integration/test_user.py
+- pytest -v -s tests/integration/test_user.py --preserve-db (check data in PostgreSQL database)
+- pytest -v -s tests/integration/test_calculation.py
+   - testing Calculation model
+- pytest -v -s tests/integration/test_schema_base.py
+- pytest -v -s tests/integration/test_calculation_schema.py
+   - testing CalculationCreate and CalculationRead
+- pytest -v -s tests/integration/test_user_auth.py
+- pytest -v -s tests/integration/test_user_auth.py --preserve-db (check data in PostgreSQL)
+- pytest -v -s tests/integration/test_dependencies.py
+- pytest -v -s tests/integration/test_database.py
+- pytest -v -s tests/e2e/test_fastapi_calculator.py
+   - testing Playwright tests and other calculator endpoints
+- pytest -s -s tests/e2e/test_bread_operations.py**
+   - testing Playwright tests for:
+      - **Positive Scenarios:** Successful creation, retrieval, updating, and deletion of calculations.
+      - **Negative Scenarios:** Handling invalid inputs, unauthorized access, and error responses.
+- pytest -v -s tests/unit/test_calculator.py 
+
+**Note:** -s: show print/log output: tells pytest not to capture stdout/sterr, so print() statements and logging messages are shown immediately in the terminal -v: verbose output: shows the full name and their individual results (e.g., PASSED, FAILED) of each test function instead of just a dot (.)
+
 
 # 🧩 1. Install Homebrew (Mac Only)
 
